@@ -10,7 +10,9 @@ tasks: list(dict()) = [
     ]
 
 class Task(BaseModel):
+    id: int
     title: str
+    done: bool
 
 
 @app.get("/")
@@ -48,3 +50,24 @@ async def create_task(task: Task):
     new_task = {"id": largest_id, "title": task.title, "done": False}
     tasks.append(new_task)
     raise HTTPException(status_code= 201, detail = new_task)
+
+
+@app.put("/tasks/{id}")
+async def update_task(task: Task):
+    for t in tasks:
+        if t["id"] == task.id:
+            if task.title is not None:
+                t["title"] = task.title
+            if task.done is not None:
+                t["done"] = task.done
+            return t
+    raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
+
+
+@app.delete("/tasks/{id}")
+async def delete_task(task: Task):
+    for i, t in enumerate(tasks):
+        if t["id"] == task.id:
+            del tasks[i]
+            raise HTTPException(status_code = 204)
+    raise HTTPException(status_code = 404, detail = f"error: Task {task.id} not found")    
