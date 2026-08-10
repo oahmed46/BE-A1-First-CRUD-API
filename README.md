@@ -194,6 +194,8 @@ curl -X DELETE http://localhost:8000/tasks/1
 **Prompt**
 Create a CRUD api using Python as the programming language. Use uv to initialize the venv and add the fastapi module as the api of choice. I want to store tasks in the python script, have three example ones with id, title, and done. The root should display metadata about the API, health should get a status of ok, get tasks will return the tasks data and with another get you can also specify which id we want to get for a single task. post tasks will create a new task, put task by id will update the task title and/or done, delete task by id will delete the specific task. Incorporate proper HTTP responses such as 204 and 404. Add any extra features you think would fit the scope of this project. Document your work in a README.md
 
+**Review**
+
 Code lives in /ai-version - improvements for pyproject.toml and .gitignore added to my work
 
 I believe my approach was well thought out, since the AI response is quite similar but has extra functionality added (such as separating the create and update models). Now I am aware there is a lot of documentation improvements that can be made, such as describing the fields in the models. 
@@ -204,4 +206,10 @@ Using a counter that tracks the largest id is better than my approach of iterati
 
 The AI also added extra features, such as filtering if a task is done or not.
 
-The only mistake/correction to be made I found is when we POST /tasks using a string with nothing in it ("") we recieve a 422 error - I did not specify it had to be 400 so it used this isntead.
+The only mistake/correction to be made I found is when we POST /tasks using a string with nothing in it ("") we recieve a 422 error - I did not specify it had to be 400 so it used this instead.
+
+**Second Prompt**
+Refactor project to use layered architecture system design instead of having everything in a main.py file.
+Also change POST /tasks to use 400 error instead of 402.
+
+**Review**
