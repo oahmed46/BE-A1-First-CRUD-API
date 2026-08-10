@@ -15,22 +15,22 @@ class Task(BaseModel):
     done: bool
 
 
-@app.get("/", description = "Retrieve API information")
+@app.get("/", description = "Returns metadata about the API.")
 async def root():
     return {"name": "Task API", "version": "1.0", "endpoints": ["/tasks", "/health"]}
 
 
-@app.get("/health", description = "Verify API health")
+@app.get("/health", description = "Health check endpoint.")
 async def read_health():
     return {"status": "ok"}
 
 
-@app.get("/tasks", description = "Retrieve a list of tasks")
+@app.get("/tasks", description = "Returns all tasks.")
 async def read_tasks():
     return tasks
 
 
-@app.get("/tasks/{id}", description = "Retrieve a task from list of tasks")
+@app.get("/tasks/{id}", description = "Returns a single task by id.")
 async def read_task(id: int):
     for task in tasks:
         if task["id"] == id:
@@ -38,7 +38,7 @@ async def read_task(id: int):
     raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
 
 
-@app.post("/tasks", description = "Create a task from list of tasks")
+@app.post("/tasks", description = "Creates a new task.")
 async def create_task(task: Task):
     if task.title is None or "":
         raise HTTPException(status_code = 400, detail = "title is required and cannot be empty")
@@ -52,7 +52,7 @@ async def create_task(task: Task):
     raise HTTPException(status_code= 201, detail = new_task)
 
 
-@app.put("/tasks/{id}", description = "Update a task from list of tasks")
+@app.put("/tasks/{id}", description = "Updates a task's title and/or done. Send one or both fields; omitted fields stay unchanged.")
 async def update_task(task: Task):
     for t in tasks:
         if t["id"] == task.id:
@@ -64,7 +64,7 @@ async def update_task(task: Task):
     raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
 
 
-@app.delete("/tasks/{id}", description = "Delete a task from list of tasks")
+@app.delete("/tasks/{id}", description = "Deletes a task.")
 async def delete_task(task: Task):
     for i, t in enumerate(tasks):
         if t["id"] == task.id:
