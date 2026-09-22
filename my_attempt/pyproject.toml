@@ -1,0 +1,9 @@
+[project]
+name = "be-a1-first-crud-api"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1",
+]
+readme = "README.md"
+description = "A small API that manages a to-do list"
