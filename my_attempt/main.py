@@ -2,40 +2,33 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
 
-con = sqlite3.connect("tasks.db")
+try: 
+    con = sqlite3.connect("tasks.db")
+    cur = con.cursor()
 
-cur = con.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    title VARCHAR(100) NOT NULL, 
+    done BOOL)""")
 
-cur.execute("""CREATE TABLE IF NOT EXISTS tasks (
-id INT AUTO_INCREMENT PRIMARY KEY, 
-title VARCHAR(100) NOT NULL, 
-done BOOL)""")
+    data = [
+        (1, "Buy groceries", False),
+        (2, "Walk the dog", True), 
+        (3, "Read a book", False),
+    ]
 
-data = [
-    (1, "Buy groceries", False),
-    (2, "Walk the dog", True), 
-    (3, "Read a book", False),
-]
-cur.executemany("""INSERT OR IGNORE INTO tasks VALUES(?, ?, ?)""", data)
-con.commit()  
+    cur.executemany("""INSERT OR IGNORE INTO tasks VALUES(?, ?, ?)""", data)
 
-#cur.execute("""INSERT OR IGNORE INTO tasks (1, Buy groceries, False),
-#(2, Walk the dog, True), 
-#(3, Read a book, False)
+    con.commit()  
 
-# cur.execute("""INSERT OR IGNORE INTO tasks ("Buy groceries", False),
-# (Walk the dog, True), 
-# (Read a book, False)
-# WHERE NOT EXISTS (SELECT * FROM tasks)
-# """)
+except sqlite3.Error as error:
+    print("Error occured -", error)
+
+finally:
+    if con:
+        con.close()
 
 app = FastAPI()
-
-tasks: list(dict()) = [
-    {"id": 1, "title": "Buy groceries", "done": False},
-    {"id": 2, "title": "Walk the dog", "done": True},
-    {"id": 3, "title": "Read a book", "done": False},
-    ]
 
 class Task(BaseModel):
     id: int
@@ -55,15 +48,39 @@ async def read_health():
 
 @app.get("/tasks", description = "Returns all tasks.")
 async def read_tasks():
-    return tasks
+    try:
+        con = sqlite3.connect("tasks.db")
+        cur = con.cursor()
+        cur.execute("SELECT * FROM tasks")
+        rows = cur.fetchall()
+
+        tasks_list = [{"id": row[0], "title": row[1], "done": row[2]} for row in rows]
+        return tasks_list
+
+    except sqlite3.Error as error:
+        raise HTTPException(status_code= 500, detail = error)
+    finally:
+        if con:
+            con.close()
 
 
 @app.get("/tasks/{id}", description = "Returns a single task by id.")
 async def read_task(id: int):
-    for task in tasks:
-        if task["id"] == id:
-            return task
-    raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
+    try:
+        con = sqlite3.connect("tasks.db")
+        cur = con.cursor()
+        cur.execute("SELECT * FROM tasks WHERE id = ?", (str(id)))
+        row = cur.fetchone()
+
+        if row:
+            return {"id": row[0], "title":row[1], "done":row[2]}
+        raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
+
+    except sqlite3.Error as error:
+        raise HTTPException(status_code= 404, detail = f"error: Task {id} not found")
+    finally:
+            if con:
+                con.close()
 
 
 @app.post("/tasks", description = "Creates a new task.")
