@@ -30,10 +30,12 @@ finally:
 
 app = FastAPI()
 
-class Task(BaseModel):
+class TaskCreate(BaseModel):
+     title: str
+     done: bool = False
+
+class Task(TaskCreate):
     id: int
-    title: str
-    done: bool
 
 
 @app.get("/", description = "Returns metadata about the API.")
@@ -77,24 +79,33 @@ async def read_task(id: int):
         raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
 
     except sqlite3.Error as error:
-        raise HTTPException(status_code= 404, detail = f"error: Task {id} not found")
+        raise HTTPException(status_code= 500, detail = error)
     finally:
             if con:
                 con.close()
 
 
 @app.post("/tasks", description = "Creates a new task.")
-async def create_task(task: Task):
+async def create_task(task: TaskCreate):
     if task.title is None or "":
-        raise HTTPException(status_code = 400, detail = "title is required and cannot be empty")
-    largest_id = 0
-    for t in tasks:
-        if t["id"] > largest_id:
-            largest_id = t["id"]
-    largest_id += 1
-    new_task = {"id": largest_id, "title": task.title, "done": False}
-    tasks.append(new_task)
-    raise HTTPException(status_code= 201, detail = new_task)
+            raise HTTPException(status_code = 400, detail = "title is required and cannot be empty")
+    
+    try:
+        con = sqlite3.connect("tasks.db")
+        cur = con.cursor()
+
+        cur.execute("SELECT * FROM tasks ORDER BY id DESC")
+        largest_id = cur.fetchone()[0]
+        new_task = Task(largest_id+1, task.title, task.done)
+
+        cur.execute("INSERT INTO tasks (id, title, done) VALUES (?,?,?)", (new_task.id, new_task.title, new_task.done))
+        con.commit()
+        raise HTTPException(status_code= 201, detail = new_task)
+    except sqlite3.Error as error:
+            raise HTTPException(status_code= 500, detail = error)
+    finally:
+            if con:
+                con.close()
 
 
 @app.put("/tasks/{id}", description = "Updates a task's title and/or done. Send one or both fields; omitted fields stay unchanged.")
