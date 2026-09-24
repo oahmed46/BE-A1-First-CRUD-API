@@ -213,3 +213,8 @@ Refactor project to use layered architecture system design instead of having eve
 Also change POST /tasks to use 400 error instead of 402.
 
 **Review**
+
+### SQLite Database
+Project has been updated to use a database instead of being stored as a Python List. Data now remains as long as `tasks.db` file exists. 
+
+Ran the query `SELECT COUNT(*) FROM tasks;` and it returned `3` since there are three default seeded tasks
