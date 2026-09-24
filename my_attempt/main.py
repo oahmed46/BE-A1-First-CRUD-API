@@ -85,7 +85,10 @@ async def read_task(id: int):
                 con.close()
 
 
-@app.post("/tasks", description = "Creates a new task.")
+@app.post("/tasks", 
+          description = "Creates a new task.",
+          response_model=Task,
+          status_code=201)
 async def create_task(task: TaskCreate):
     if task.title is None or "":
             raise HTTPException(status_code = 400, detail = "title is required and cannot be empty")
@@ -100,7 +103,7 @@ async def create_task(task: TaskCreate):
 
         cur.execute("INSERT INTO tasks (id, title, done) VALUES (?,?,?)", (new_task.id, new_task.title, new_task.done))
         con.commit()
-        raise HTTPException(status_code= 201, detail = new_task)
+        return new_task
     except sqlite3.Error as error:
             raise HTTPException(status_code= 500, detail = error)
     finally:
@@ -108,22 +111,53 @@ async def create_task(task: TaskCreate):
                 con.close()
 
 
-@app.put("/tasks/{id}", description = "Updates a task's title and/or done. Send one or both fields; omitted fields stay unchanged.")
+@app.put("/tasks/{id}", 
+         description = "Updates a task's title and/or done. Send one or both fields; omitted fields stay unchanged.",
+         response_model=Task,
+         status_code=201)
 async def update_task(task: Task):
-    for t in tasks:
-        if t["id"] == task.id:
-            if task.title is not None:
-                t["title"] = task.title
-            if task.done is not None:
-                t["done"] = task.done
-            return t
-    raise HTTPException(status_code = 404, detail = f"error: Task {id} not found")
+    try:
+        con = sqlite3.connect("tasks.db")
+        cur = con.cursor()
+
+        cur.execute("SELECT * FROM tasks WHERE id = ?", (str(task.id)))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail=f"error: Task {task.id} not found")
+
+        task.title = task.title if task.title is not None else row[1]
+        task.done = task.done if task.done is not None else row[2]
+
+        cur.execute("UPDATE tasks SET title = ?, done = ? WHERE id = ?", (task.title, task.done, task.id))
+        con.commit()
+        return task
+    except sqlite3.Error as error:
+            raise HTTPException(status_code= 500, detail = error)
+    finally:
+            if con:
+                con.close()
 
 
-@app.delete("/tasks/{id}", description = "Deletes a task.")
-async def delete_task(task: Task):
-    for i, t in enumerate(tasks):
-        if t["id"] == task.id:
-            del tasks[i]
-            raise HTTPException(status_code = 204)
-    raise HTTPException(status_code = 404, detail = f"error: Task {task.id} not found")    
+@app.delete("/tasks/{id}", 
+            description = "Deletes a task.",
+            status_code=204)
+async def delete_task(id: int):
+    try:
+        con = sqlite3.connect("tasks.db")
+        cur = con.cursor()
+
+        cur.execute("SELECT * FROM tasks WHERE id = ?", (str(id)))
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail=f"error: Task {id} not found")
+
+        cur.execute("DELETE FROM tasks WHERE id = ?", (str(id)))
+        con.commit()
+        return None
+    except sqlite3.Error as error:
+            raise HTTPException(status_code= 500, detail = error)
+    finally:
+            if con:
+                con.close()
