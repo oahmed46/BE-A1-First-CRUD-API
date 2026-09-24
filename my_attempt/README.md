@@ -217,4 +217,7 @@ Also change POST /tasks to use 400 error instead of 402.
 ### SQLite Database
 Project has been updated to use a database instead of being stored as a Python List. Data now remains as long as `tasks.db` file exists. 
 
+Example of database 
+![Tables in database running in DB Browser](image.png)
+
 Ran the query `SELECT COUNT(*) FROM tasks;` and it returned `3` since there are three default seeded tasks
