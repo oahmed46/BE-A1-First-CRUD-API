@@ -1,0 +1,11 @@
+[project]
+name = "tasks-api"
+version = "0.1.0"
+description = "A SQLite-backed CRUD API for managing tasks, built with a layered architecture."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.52.1",
+    "aiosqlite>=0.19.0",
+]
